@@ -1,0 +1,6 @@
+select Department,Employee,salary from (select d.name Department,e.name Employee, 
+    rank() over (partition by d.name order by e.salary desc) rnk,e.salary
+from employee e,
+     department d
+where e.departmentid = d.id)
+where rnk = 1
