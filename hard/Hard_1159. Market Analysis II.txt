@@ -1,0 +1,13 @@
+select user_id seller_id,'no' "2nd_item_fav_brand" from users
+where user_id not in (select seller_id from (select row_number() over (partition by seller_id order by order_date) rn,seller_id
+             from orders)
+        where rn = 2)
+union
+select u.user_id seller_id,case when u.favorite_brand = i.item_brand then 'yes' else 'no' end "2nd_item_fav_brand"
+from (select seller_id,item_id from (select row_number() over (partition by seller_id order by                order_date) rn,seller_id,item_id
+             from orders)
+        where rn = 2) a,
+users u,
+items i
+where a.seller_id = u.user_id
+and a.item_id = i.item_id

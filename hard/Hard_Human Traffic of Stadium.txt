@@ -1,0 +1,11 @@
+select id "id",to_char(visit_date,'yyyy-mm-dd') "visit_date",people "people" from (select people, (select people from stadium where id = lg) first_abv_ppl, (select people from stadium where id = lg-1) sec_abv_ppl,id,visit_date
+from (select lead(id) over (order by id) ld,lag(id) over (order by id) lg,id,visit_date,people
+from stadium)) where people >= 100 and first_abv_ppl >= 100 and sec_abv_ppl >= 100
+union
+select id "id",to_char(visit_date,'yyyy-mm-dd') "visit_date",people "people" from (select people, (select people from stadium where id = ld) first_blw_ppl, (select people from stadium where id = ld+1) sec_blw_ppl,id,visit_date
+from (select lead(id) over (order by id) ld,lag(id) over (order by id) lg,id,visit_date,people
+from stadium)) where people >= 100 and first_blw_ppl >= 100 and sec_blw_ppl >= 100
+union
+select id "id",to_char(visit_date,'yyyy-mm-dd') "visit_date",people "people" from (select people, (select people from stadium where id = lg) first_abv_ppl, (select people from stadium where id = ld) first_blw_ppl,id,visit_date
+from (select lead(id) over (order by id) ld,lag(id) over (order by id) lg,id,visit_date,people
+from stadium)) where people >= 100 and first_abv_ppl >= 100 and first_blw_ppl >= 100;

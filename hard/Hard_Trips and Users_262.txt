@@ -1,0 +1,14 @@
+select a.request_at "Day",round(b.cnt/a.cnt,2) "Cancellation Rate" 
+from (select count(t.request_at) cnt,t.request_at 
+from trips t
+where t.client_id in (select users_id from users where banned = 'No')
+and t.driver_id in (select users_id from users where banned = 'No')
+group by t.request_at)a,
+(select sum(case when t.status like 'cancelled_by_%' then 1
+else 0 end) cnt,t.request_at 
+from trips t
+where t.client_id in (select users_id from users where banned = 'No')
+and t.driver_id in (select users_id from users where banned = 'No')
+group by t.request_at)b
+where a.request_at = b.request_at
+and a.request_at between '2013-10-01' and '2013-10-03'

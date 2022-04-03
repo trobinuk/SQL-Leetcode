@@ -1,0 +1,53 @@
+create table SALARY
+(id number,
+employee_id     number,
+amount      number,
+pay_date date);
+/
+drop table employee;
+/
+insert into salary  
+values (1,1,9000,to_date('2017/03/31','YYYY/MM/DD'));
+/
+insert into salary  values(2,2,6000,to_date('2017/03/31','yyyy/mm/dd'));
+insert into salary  values(3,3,10000,to_date('2017/03/31','yyyy/mm/dd'));
+insert into salary  values(4,1,7000,to_date('2017/02/28','yyyy/mm/dd'));
+insert into salary  values(5,2,6000,to_date('2017/02/28','yyyy/mm/dd'));
+insert into salary  values(6,3,8000,to_date('2017/02/28','yyyy/mm/dd'));
+/
+SELECT * FROM employee;
+/
+SELECT * FROM SALARY;
+/
+create table employee
+(
+employee_id     number,
+DEPARTMENT_id number)
+/
+
+insert into employee  values(1,1);
+insert into employee  values(2,2);
+insert into employee  values(3,2);
+/
+select distinct pay_month,department_id,comparison from (with q1 as (select round(avg(amount),2) avg_dpt_sal_month,department_id,pay_date from salary s,employee e
+            where s.employee_id = e.employee_id
+            group by department_id,pay_date),
+    q2 as (select round(avg(amount),2) Avg_sal,pay_date
+            from salary
+            group by pay_date)
+select  to_char(q1.pay_date,'yyyy-mm') pay_month,q1.department_id,
+        case when q1.avg_dpt_sal_month > q2.avg_sal then 'higher'
+             when q1.avg_dpt_sal_month < q2.avg_sal then 'lower'
+             else 'same' end comparison
+from q1,q2
+where q1.pay_date = q2.pay_date
+order by q1.department_id,q1.pay_date);
+/
+select distinct pay_month,department_id,case when avg_sal_month_dpt > avg_sal_month then 'higher'
+             when avg_sal_month_dpt < avg_sal_month then 'lower'
+             else 'same' end comparison from (select distinct avg(amount) over (partition by pay_date) avg_sal_month,
+       avg(amount) over (partition by department_id,pay_date) avg_sal_month_dpt, 
+       to_char(pay_date,'yyyy-mm') pay_month,
+       department_id
+from salary s,employee e
+where s.employee_id = e.employee_id);

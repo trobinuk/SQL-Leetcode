@@ -1,0 +1,43 @@
+with q1 as (select company,
+       case when mod(cnt,2) = 0 then cnt/2+.5
+            when mod(cnt,2) = 1 then floor(cnt/2)+1 else 0 end cnt
+from        
+(select count(id) cnt,company
+from employee
+group by company)),
+q2 as (select row_number() over (partition by company order by salary) rn,salary,company,id from employee
+order by company,salary)
+select  distinct q2.id,q2.company,q2.salary
+from q2,q1
+where ((q2.company,q2.rn) in (select q1.company,ceil(cnt) from q1))
+or ((q2.company,q2.rn) in (select q1.company,floor(cnt) from q1))
+and q2.company = q1.company
+order by q2.company,q2.salary
+/
+create table employee
+(id number,
+company     varchar2(100),
+salary      number);
+/
+drop table employee;
+/
+insert into employee 
+values(1,'A',2341);
+insert into employee  values(2,'A',341);
+insert into employee  values(3,'A',15);
+insert into employee  values(4,'A',15314);
+insert into employee  values(5,'A',451);
+insert into employee  values(6,'A',513);
+insert into employee  values(7,'B',15);
+insert into employee  values(8,'B',13);
+insert into employee  values(9,'B',1154);
+insert into employee  values(10,'B',1345);
+insert into employee  values(11,'B',1221);
+insert into employee  values(12,'B',234);
+insert into employee  values(13,'C',2345);
+insert into employee  values(14,'C',2645);
+insert into employee  values(15,'C',2645);
+insert into employee  values(16,'C',2652);
+insert into employee  values(17,'C',65);
+/
+SELECT * FROM employee;

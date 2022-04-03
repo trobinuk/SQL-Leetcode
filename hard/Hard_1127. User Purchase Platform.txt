@@ -1,0 +1,58 @@
+select to_char(spend_date,'yyyy-mm-dd') spend_date,platform,sum(total_amount) total_amount,count(user_id) total_users from (select spend_date,'both' platform,sum(amount) total_amount,user_id from spending
+where (spend_date,user_id) in (select spend_date,user_id from spending where platform = 'mobile')
+and (spend_date,user_id) in (select spend_date,user_id from spending where platform = 'desktop')
+group by spend_date,user_id) 
+group by spend_date,platform
+union
+select distinct to_char(spend_date,'yyyy-mm-dd') spend_date,'both' platform,to_number('0') total_amount,to_number('0') total_users from spending
+where spend_date not in (select distinct spend_date
+from spending
+where (spend_date,user_id)  in (select spend_date,user_id from spending where platform = 'mobile')
+and (spend_date,user_id)  in (select spend_date,user_id from spending where platform = 'desktop'))
+union 
+select to_char(spend_date,'yyyy-mm-dd') spend_date,platform,sum(total_amount) total_amount,count(user_id) total_users from (select user_id,'mobile' platform,spend_date,sum(amount) total_amount
+from spending
+where platform = 'mobile'--,'desktop'
+and (spend_date,user_id) not in (select distinct spend_date,user_id from spending
+                                where (spend_date,user_id) in (select spend_date,user_id from spending where platform = 'mobile')
+                                and (spend_date,user_id) in (select spend_date,user_id from spending where platform = 'desktop'))
+group by user_id,spend_date)
+group by spend_date,platform
+union
+select distinct to_char(spend_date,'yyyy-mm-dd') spend_date,'mobile' platform,to_number('0') total_amount,to_number('0') total_users from spending
+where spend_date not in(select distinct spend_date from spending
+where platform = 'mobile'--,'desktop'
+and (spend_date,user_id) not in (select distinct spend_date,user_id from spending
+                                where (spend_date,user_id) in (select spend_date,user_id from spending where platform = 'mobile')
+                                and (spend_date,user_id) in (select spend_date,user_id from spending where platform = 'desktop')))
+union
+select to_char(spend_date,'yyyy-mm-dd') spend_date,platform,sum(total_amount) total_amount,count(user_id) total_users from (select user_id,'desktop' platform,spend_date,sum(amount) total_amount
+from spending
+where platform = 'desktop'--,'desktop'
+and (spend_date,user_id) not in (select distinct spend_date,user_id from spending
+                                where (spend_date,user_id) in (select spend_date,user_id from spending where platform = 'mobile')
+                                and (spend_date,user_id) in (select spend_date,user_id from spending where platform = 'desktop'))
+group by user_id,spend_date)
+group by spend_date,platform
+union
+select distinct to_char(spend_date,'yyyy-mm-dd') spend_date,'desktop' platform,to_number('0') total_amount,to_number('0') total_users from spending
+where spend_date not in(select distinct spend_date from spending
+where platform = 'desktop'
+and (spend_date,user_id) not in (select distinct spend_date,user_id from spending
+                                where (spend_date,user_id) in (select spend_date,user_id from spending where platform = 'mobile')
+                                and (spend_date,user_id) in (select spend_date,user_id from spending where platform = 'desktop')))
+/
+create table spending(
+user_id     number,
+spend_date  date,
+platform    varchar2(100),
+amount     number);
+ /
+insert into spending values(1,to_date('2019-07-01','yyyy-mm-dd'),'mobile',100);
+insert into spending values(1,to_date('2019-07-01','yyyy-mm-dd'),'desktop',100);
+insert into spending values(2,to_date('2019-07-01','yyyy-mm-dd'),'mobile',100);
+insert into spending values(2,to_date('2019-07-02','yyyy-mm-dd'),'mobile',100);
+insert into spending values(3,to_date('2019-07-01','yyyy-mm-dd'),'desktop',100);
+insert into spending values(3,to_date('2019-07-02','yyyy-mm-dd'),'desktop',100);
+/
+select * from spending;

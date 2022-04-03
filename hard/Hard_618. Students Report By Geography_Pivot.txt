@@ -1,0 +1,24 @@
+create table student
+(name varchar2(100),
+continent varchar2(100));
+/
+--insert into student values('
+insert into student values('Jane','America');
+insert into student values('Pascal','Europe');
+insert into student values('Xi','Asia');
+insert into student values('Jack','America');
+/
+select * from student;
+/
+select * from
+(select name,continent from student)
+pivot (count(continent) 
+        FOR continent in ('America' as "America",'Europe' as "Europe",'Asia' as "Asia"));
+/
+select decode(america,'1',name,null) america,
+       decode(europe,'1',name,null) europe,
+       decode(asia,'1',name,null) asia
+from(select * from
+(select name,continent from student)
+pivot (count(continent) 
+        FOR continent in ('America' as "AMERICA",'Europe' as "EUROPE",'Asia' as "ASIA")));

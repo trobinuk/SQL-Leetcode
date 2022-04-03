@@ -1,0 +1,9 @@
+select group_id,player_id from (select p.group_id,rank() over (partition by p.group_id order by a.total_score desc,p.player_id asc) rnk,p.player_id from (select player,sum(score) total_score from (select first_player player,first_score score
+from matches
+union all
+select second_player player,second_score score
+from matches)
+group by player)a,
+players p
+where a.player = p.player_id)
+where rnk = 1
