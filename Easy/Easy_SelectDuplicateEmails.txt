@@ -1,0 +1,1 @@
+select distinct email from (select row_number() over (partition by email order by email) rn,email from person) where rn <> 1

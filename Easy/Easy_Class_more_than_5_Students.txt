@@ -1,0 +1,3 @@
+select class from (select count(class) cnt,class
+from courses
+group by class) where cnt >= 5

@@ -1,0 +1,14 @@
+select p.firstname,p.lastname,a.city,a.state
+from person p,
+     address a
+where p.personid = a.personid(+) -- 655 ms
+/
+select p.firstname,p.lastname,a.city,a.state
+from person p 
+left join address a
+on p.personid = a.personid--925 ms
+/
+select person.firstname,person.lastname,address.city,address.state
+from person,
+     address
+where person.personid = address.personid(+)--726 ms

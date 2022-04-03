@@ -1,0 +1,5 @@
+select name "Employee" from (select e1.name name1,e1.id id1,e1.salary salary1,e2.name,e2.salary,e2.id
+from employee e1,
+     employee e2
+where e1.id = e2.managerid)
+where salary1 < salary;

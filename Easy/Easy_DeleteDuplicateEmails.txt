@@ -1,0 +1,4 @@
+delete from person
+where rowid in (
+select rowid from (select row_number() over (partition by email order by id) rn,email,id,rowid from person order by id)
+where rn > 1)

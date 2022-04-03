@@ -1,0 +1,2 @@
+select id from (select id,recorddate,temperature,lag(temperature) over (order by recorddate) as temp1,recorddate-lag(recorddate) over (order by recorddate) lg from weather
+order by recordDate) where temperature > temp1 and temp1 is not null and lg = 1

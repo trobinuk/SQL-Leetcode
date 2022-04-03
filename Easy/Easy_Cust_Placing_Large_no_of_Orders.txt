@@ -1,0 +1,10 @@
+select customer_number from (select customer_number,rank() over (order by cnt desc) rnk from (select count(customer_number) cnt,customer_number
+from orders
+group by customer_number))
+where rnk = '1'
+
+select customer_number from (select customer_number,count(*) cnt
+from orders
+group by customer_number
+order by cnt desc)
+where rownum = '1'
