@@ -1,0 +1,130 @@
+with cte as(
+select b.bus_id,
+       b.arrival_time,
+       b.capacity, 
+       coalesce(y.psngr_cnt,0) passengers_cnt,
+       row_number() over (order by b.arrival_time) rn
+from (select x.bus_id,count(x.passenger_id) psngr_cnt 
+        from  (select b.bus_id,
+               b.arrival_time,
+               b.capacity,
+               p.passenger_id,
+               p.arrival_time psngr_arrival_time,
+               row_number() over (partition by passenger_id order by p.arrival_time,b.arrival_time) rn
+                from buses b,
+                     passengers p
+                where p.arrival_time <= b.arrival_time) x
+        where rn = 1
+        group by x.bus_id) y,
+        buses b
+where b.bus_id = y.bus_id(+)),
+cte2 (bus_id, passengers_cnt, lft, n) as
+(
+    Select bus_id, Case When passengers_cnt >= capacity Then capacity Else passengers_cnt End passengers_cnt,
+    Case When passengers_cnt > capacity Then passengers_cnt - capacity Else 0 End lft, 1 as n
+    From cte
+    Where rn = 1
+    union all
+    select cte.bus_id,case when lft+cte.passengers_cnt >= cte.capacity Then capacity Else lft+cte.passengers_cnt End passengers_cnt,
+    Case When lft+cte.passengers_cnt > cte.capacity Then lft+cte.passengers_cnt - cte.capacity Else 0 End lft, n+1 as n
+    From cte,cte2
+    Where rn = n+1
+)
+select bus_id, passengers_cnt from cte2
+order by bus_id
+/
+/* Write your PL/SQL query statement below */
+with cte_psngr as (
+        select arrival_time, sum(psngr_cnt) over (order by arrival_time) psngr_cnt from
+        (select arrival_time,count(*) psngr_cnt
+        from passengers
+        group by arrival_time
+        order by arrival_time)),
+    cte_psngr_bus as (
+        select b.bus_id,b.arrival_time,b.capacity,coalesce(max(cp.psngr_cnt),0) psngrs,
+                row_number() over (order by b.arrival_time) rn
+        from buses b,
+             cte_psngr cp
+        where b.arrival_time >= cp.arrival_time(+)
+        group by b.bus_id,b.arrival_time,b.capacity
+        order by b.arrival_time),
+    cte_regression(bus_id,psngr_cnt,psngr_travelled,n) as (
+        select bus_id,case when capacity <= psngrs then capacity else psngrs end psngr_cnt,case when capacity <= psngrs then capacity else psngrs end psngr_travelled, 1 as n 
+        from cte_psngr_bus
+        where rn = 1
+        union all
+        select cpb.bus_id,case when capacity <= (psngrs-cr.psngr_travelled) then capacity else (psngrs-cr.psngr_travelled) end  psngr_cnt,cr.psngr_travelled+(case when capacity <= (psngrs-cr.psngr_travelled) then capacity else (psngrs-cr.psngr_travelled) end) psngr_travelled, n+1 as n
+        from cte_psngr_bus cpb,cte_regression cr
+        where rn = n+1
+    )
+select bus_id,psngr_cnt passengers_cnt from cte_regression
+order by bus_id
+
+/
+select * from buses;
+/
+select * from Passengers;
+/
+select arrival_time,capacity 
+from buses 
+order by arrival_time;
+/
+select arrival_time,count(passenger_id) passenger_arrived
+from Passengers
+group by arrival_time
+order by arrival_time;
+/
+select bus_arrival_time,capacity,bus_id,pass_arrival_time,cnt_passenger_arrived,
+        case when pass_arrival_time 
+from (select arrival_time bus_arrival_time,capacity,bus_id
+        from buses 
+        order by arrival_time)t1,
+      (select arrival_time pass_arrival_time,count(passenger_id) cnt_passenger_arrived
+            from Passengers
+            group by arrival_time
+            order by arrival_time) t2  
+where t1.bus_arrival_time >= t2.pass_arrival_time
+order by t1.bus_arrival_time,t2.pass_arrival_time
+/
+select bus_id, least(capacity,recursive_psngr_cnt) passengers_cnt
+from
+(select bus_id,
+        arrival_time,
+        capacity,
+        passenger_count,
+        rn,
+        cap_passngr,
+        case when nvl(ld,0) > 0 then ld+passenger_count else passenger_count end recursive_psngr_cnt
+from
+(select --case when min_travellers < 0 then capacity else passenger_count end nn,
+        bus_id,
+        arrival_time,
+        capacity,
+        passenger_count,
+        rn,
+        cap_passngr,
+        lag(cap_passngr) over (order by rn) ld,
+        least(capacity,passenger_count) lst
+from
+(select b.bus_id,
+       b.arrival_time,
+       b.capacity, 
+       coalesce(y.psngr_cnt,0) passenger_count,
+       row_number() over (order by b.arrival_time) rn,
+       --b.capacity-coalesce(y.psngr_cnt,0) min_travellers,
+       coalesce(y.psngr_cnt,0) - b.capacity cap_passngr
+from (select x.bus_id,count(x.passenger_id) psngr_cnt 
+        from  (select b.bus_id,
+               b.arrival_time,
+               b.capacity,
+               p.passenger_id,
+               p.arrival_time psngr_arrival_time,
+               row_number() over (partition by passenger_id order by p.arrival_time,b.arrival_time) rn
+                from buses b,
+                     passengers p
+                where p.arrival_time <= b.arrival_time) x
+        where rn = 1
+        group by x.bus_id) y,
+        buses b
+where b.bus_id = y.bus_id(+))))
+            

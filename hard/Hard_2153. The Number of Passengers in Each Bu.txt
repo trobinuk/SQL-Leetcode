@@ -1,0 +1,43 @@
+create table buses
+( bus_id       number,
+ arrival_time number,
+ capacity    number);
+/
+create table passengers
+( passenger_id number,
+arrival_time number);
+/
+insert into buses values(1,2,1);
+insert into buses values(2,4,10);
+insert into buses values(3,7,2);
+/
+insert into passengers values(11,1);
+insert into passengers values(12,1);
+insert into passengers values(13,5);
+insert into passengers values(14,6);
+insert into passengers values(15,7);
+/
+select bus_id,arrival_time,capacity from buses;
+/
+select count(*) cnt,arrival_time from passengers group by arrival_time order by arrival_time;
+/
+select *
+from buses b,
+     (select count(*) cnt,arrival_time from passengers group by arrival_time order by arrival_time) a
+where a.arrival_time  <= b.arrival_time
+--and b.capacity <= a.cnt
+/
+select sum()
+from (select count(*) cnt,arrival_time from passengers group by arrival_time order by arrival_time);
+/
+select bus_id,arrival_time,psgr_arr_time,cnt,capacity,cum_sum,least(capacity,cum_sum) lst
+from buses b,
+(select arrival_time psgr_arr_time,cnt,sum(cnt) over (order by arrival_time rows BETWEEN UNBOUNDED PRECEDING and CURRENT ROW) cum_sum   
+from (select count(*) cnt,
+             arrival_time 
+        from passengers 
+        group by arrival_time 
+        order by arrival_time)) p
+where b.arrival_time >= p.psgr_arr_time
+--Check for connect by prior
+--Have to subtract cum_sum as well for each passengers arroival time

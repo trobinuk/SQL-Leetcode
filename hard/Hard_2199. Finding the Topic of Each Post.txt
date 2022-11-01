@@ -1,0 +1,39 @@
+select  post_id, 
+        listagg(topic_id,',') within group (order by topic_id) topic
+        --over (partition by post_id) topic
+from (select distinct p.post_id,k.topic_id 
+from posts p,
+     keywords k
+where instr(' '||lower(p.content)||' ',' '||lower(k.word)||' ') > 0)
+group by post_id
+union
+select p.post_id,'Ambiguous!' topic
+from posts p 
+where p.post_id not in (select p.post_id
+                        from posts p,
+                             keywords k
+                        where instr(' '||lower(p.content)||' ',' '||lower(k.word)||' ') > 0)
+                order by topic
+/
+insert into Posts values (3, 'crisp uNBErEavEN uNAmelIoRATed VERStes unBARtErINg'); 
+insert into Posts values (5, 'fascinatedly COmpoLe prENotIcE VIEtNamEsE'); 
+insert into Posts values (2, 'vietnamese ePiZooLOGY VeRSteS OVErlABoR oVERlaBor swIRLy VeRSTEs'); 
+insert into Posts values (1, 'overlabor cOMpOlE crAnKCASe UNBErEaVen OBTRuDEr UnbaRTERING uNbarTerInG uNaMElioRAtED'); 
+insert into Posts values (6, 'crisp pREnoTiCe ZooPhYSicaL unBEreAVEN VieTnaMESE obTRUDER epiZoOlogY KulAkI oveRlABOR fAsCiNaTEDlY'); 
+insert into Posts values (4, 'recleaner faScInATEdLY RecLEaNeR HaiKH vERSTes vieTNAmESe BesTOWagE kulAKi orNitHoSaurIA EPIzOolOGY');
+/           
+insert into Keywords values (1, 'unbereaven'); 
+insert into Keywords values (0, 'overlabor'); 
+insert into Keywords values (2, 'recleaner'); 
+insert into Keywords values (2, 'haikh'); 
+insert into Keywords values (0, 'kulaki');
+
+/
+create table posts (
+post_id number,
+content varchar2(1000));
+/
+create table keywords (
+topic_id number,
+word1  varchar2(1000));
+/

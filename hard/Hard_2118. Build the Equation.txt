@@ -1,0 +1,29 @@
+create table terms
+( power      number,
+ factor      number);
+ /
+insert into terms values(2,1);
+insert into terms values(1,-4);
+insert into terms values(0,2);
+/
+select listagg(decode(substr(factor,1,1),'-','-','+')||decode(substr(factor,1,1),'-',substr(factor,2),factor) ||
+        case when power = 1 then 'X'
+             when power = 0 then '' else 'X^'||power end,'')||'=0' equation
+from terms;--+1X^2,-4X,+2
+/
+/*select wm_concat(decode(substr(factor,1,1),'-','-','+')||decode(substr(factor,1,1),'-',substr(factor,2),factor) ||
+        case when power = 1 then 'X'
+             when power = 0 then '' else 'X^'||power end,'')||'=0' equation
+from terms;
+/
+select wm_concat(factor) from terms;
+/
+select rtrim(xmlagg(xmlelement(e, decode(substr(factor,1,1),'-','-','+')||decode(substr(factor,1,1),'-',substr(factor,2),factor) ||
+        case when power = 1 then 'X'
+             when power = 0 then '' else 'X^'||power end, ',')).extract('//text()').getclobval(), ',')||'=0' equation from terms;*/
+/
+select to_char(case when substr(factor,1,1) = '-' then '-' else '+' end)||
+        to_char(case when substr(factor,1,1) = '-' then to_char(substr(factor,2)) else to_char(factor) end)||
+        case when power = 1 then 'X'
+             when power = 0 then '' else 'X^'||power end||'=0' equation
+from terms;

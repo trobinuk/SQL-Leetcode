@@ -1,0 +1,12 @@
+select employee_id from (select employee_id,salary, sum(salary) over (order by salary rows between unbounded preceding and current row) sn 
+from candidates
+where experience = 'Senior')
+where sn <= 70000
+union all
+select employee_id from (select employee_id,salary, sum(salary) over (order by salary rows between unbounded preceding and current row) sn 
+from candidates
+where experience = 'Junior')
+where sn <= (select 70000-nvl(sum(salary),0) sal from (select employee_id,salary, sum(salary) over (order by salary rows between unbounded preceding and current row) sn 
+            from candidates
+            where experience = 'Senior')
+            where sn <= 70000)

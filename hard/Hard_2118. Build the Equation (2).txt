@@ -1,0 +1,11 @@
+select listagg(equation,'') within group (order by rn)||'=0' equation
+from (
+    select  case when power = 0 then 
+                case when factor > 0 then to_char('+'||factor)
+                else to_char(factor) end
+             when power = 1 then case when factor > 0 then to_char('+'||factor)
+                else to_char(factor) end||'X'
+        else case when factor > 0 then to_char('+'||factor)
+                else to_char(factor) end||'X^'||power end equation,
+      row_number() over (order by power desc) rn
+from terms)

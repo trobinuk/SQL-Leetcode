@@ -1,0 +1,74 @@
+create table likes
+(user_id number,
+page_id number);
+/
+create table friendship
+(user1_id number,
+user2_id number);
+/
+insert into friendship values(1,2);
+insert into friendship values(1,3);
+insert into friendship values(1,4);
+insert into friendship values(2,3);
+insert into friendship values(2,4);
+insert into friendship values(2,5);
+insert into friendship values(6,1);
+/
+insert into likes values(1,88);
+insert into likes values(2,23);
+insert into likes values(3,24);
+insert into likes values(4,56);
+insert into likes values(5,11);
+insert into likes values(6,33);
+insert into likes values(2,77);
+insert into likes values(3,77);
+insert into likes values(6,88);
+/
+select f.person_id,f.frd_id,l.page_id,l.user_id
+from (select user1_id person_id,user2_id frd_id from friendship
+        union
+        select user2_id person_id,user1_id frd_id from friendship) f,
+        likes l
+where f.person_id = l.user_id;
+/
+select * from likes;
+/
+select frd_id
+from (select user1_id person_id,user2_id frd_id from friendship
+        union
+        select user2_id person_id,user1_id frd_id from friendship) f
+where person_id = 1
+/
+select * from likes
+where user_id in (select frd_id
+                    from (select user1_id person_id,user2_id frd_id from friendship
+                            union
+                            select user2_id person_id,user1_id frd_id from friendship) f
+                    where person_id = 1)
+and page_id not in (select page_id from likes where user_id = 1)
+/
+select * 
+from likes l
+where exists (select * from (select user1_id person_id,user2_id frd_id from friendship
+                            union
+                            select user2_id person_id,user1_id frd_id from friendship) f
+                            where f.frd_id = l.user_id );
+/
+select * 
+from likes l,
+     (select user1_id person_id,user2_id frd_id from friendship
+                            union
+                            select user2_id person_id,user1_id frd_id from friendship) f
+where  l.page_id not in (select page_id from likes where user_id = f.person_id);
+/
+select person_id,frd_id from (select user1_id person_id,user2_id frd_id from friendship
+        union
+        select user2_id person_id,user1_id frd_id from friendship)
+        /
+        select * from likes,(select person_id,frd_id from (select user1_id person_id,user2_id frd_id from friendship
+        union
+        select user2_id person_id,user1_id frd_id from friendship)) sq
+        where user_id in (select frd_id from (select person_id,frd_id from (select user1_id person_id,user2_id frd_id from friendship
+                                                                            union
+                                                                            select user2_id person_id,user1_id frd_id from friendship)) 
+                                                                            where person_id = sq.person_id)

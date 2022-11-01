@@ -1,0 +1,44 @@
+select item_category category,nvl(monday,0) monday,nvl(tuesday,0) tuesday,nvl(wednesday,0) wednesday,
+        nvl(thursday,0) thursday,nvl(friday,0) friday,nvl(saturday,0) saturday,nvl(sunday,0) sunday 
+from (select *from(
+        select trim(to_char(o.order_date,'DAY')) order_day,sum(o.quantity) qty,i.item_category 
+        from orders o,
+             items i
+        where o.item_id = i.item_id
+        group by trim(to_char(o.order_date,'DAY')),i.item_category
+        union all 
+        select 'SUNDAY' order_day,to_number('0') qty,item_category
+        from items
+        where item_id not in (select distinct item_id from orders))
+pivot (sum(qty)
+        for order_day in ('MONDAY' as "MONDAY",'TUESDAY' as "TUESDAY",'WEDNESDAY' as "WEDNESDAY",'THURSDAY' as "THURSDAY",'FRIDAY' as "FRIDAY",'SATURDAY' as "SATURDAY",'SUNDAY' as "SUNDAY")))
+order by item_category;
+/
+create table orders
+(order_id      number,
+customer_id   number,
+order_date    date,
+item_id       varchar2(100),
+quantity      number);
+/
+create table items(
+item_id        varchar2(100),
+item_name        varchar2(100),
+item_category      varchar2(100));
+ /
+insert into items values(1,null,'Book');
+insert into items values(2,null,'Book');
+insert into items values(3,null,'Phone');
+insert into items values(4,null,'Phone');
+insert into items values(5,null,'Glasses');
+insert into items values(6,null,'T-Shirt');
+/
+insert into orders values(1,1,to_date('2020-06-01','yyyy-mm-dd'),'1',10);
+insert into orders values(2,1,to_date('2020-06-08','yyyy-mm-dd'),'2',10);
+insert into orders values(3,2,to_date('2020-06-02','yyyy-mm-dd'),'1',5);
+insert into orders values(4,3,to_date('2020-06-03','yyyy-mm-dd'),'3',5);
+insert into orders values(5,4,to_date('2020-06-04','yyyy-mm-dd'),'4',1);
+insert into orders values(6,4,to_date('2020-06-05','yyyy-mm-dd'),'5',5);
+insert into orders values(7,5,to_date('2020-06-05','yyyy-mm-dd'),'1',10);
+insert into orders values(8,5,to_date('2020-06-14','yyyy-mm-dd'),'4',5);
+insert into orders values(9,5,to_date('2020-06-21','yyyy-mm-dd'),'3',5);

@@ -1,0 +1,81 @@
+select a.product_id,p.product_name,a.report_year,a.total_amount
+from product p,
+(select product_id,to_char(final_period,'yyyy') report_year,sum(total_amount) total_amount 
+from (select product_id,final_period,nvl(to_number(final_period-lag(final_period) over (partition by product_id order by final_period)),1) * average_daily_sales total_amount
+            from (select product_id,--period_start,lvl,period_end,add_months(period_start,lvl-1) period, 
+                   case when period_end < add_months(period_start,lvl-1) then period_end else add_months(period_start,lvl-1) end final_period,
+                   average_daily_sales
+                    from sales s,
+                        (select level lvl
+                        from dual
+                        connect by level <= (select max(ceil(months_between(period_end,period_start)))+1 from sales)) sq
+                    where lvl <= ceil(months_between(period_end,period_start))+1
+                    union
+                    select product_id,trunc(final_period,'yyyy') final_period,average_daily_sales
+                    from (select product_id,average_daily_sales,final_period,to_char(final_period,'yyyy') yr,
+                           to_number(to_char(final_period,'yyyy'))-to_number(lag(to_char(final_period,'yyyy')) over (partition by product_id order by final_period)) lg 
+                    from (select product_id,average_daily_sales,period_start,lvl,period_end,add_months(period_start,lvl-1) period,
+                           case when period_end < add_months(period_start,lvl-1) then period_end else add_months(period_start,lvl-1) end final_period
+                    from sales s,
+                        (select level lvl
+                        from dual
+                        connect by level <= (select max(ceil(months_between(period_end,period_start)))+1 from sales)) sq
+                    where lvl <= ceil(months_between(period_end,period_start))+1
+                    order by s.product_id,sq.lvl))
+                    where lg = 1
+                    union
+                    select product_id,last_day(add_months(final_period,-1)) final_period,average_daily_sales
+                    from (select product_id,average_daily_sales,final_period,to_char(final_period,'yyyy') yr,
+                           to_number(to_char(final_period,'yyyy'))-to_number(lag(to_char(final_period,'yyyy')) over (partition by product_id order by final_period)) lg 
+                    from (select product_id,average_daily_sales,period_start,lvl,period_end,add_months(period_start,lvl-1) period,
+                           case when period_end < add_months(period_start,lvl-1) then period_end else add_months(period_start,lvl-1) end final_period
+                    from sales s,
+                        (select level lvl
+                        from dual
+                        connect by level <= (select max(ceil(months_between(period_end,period_start)))+1 from sales)) sq
+                    where lvl <= ceil(months_between(period_end,period_start))+1
+                    order by s.product_id,sq.lvl))
+                    where lg = 1
+                    order by product_id,final_period)
+    )
+where total_amount is not null
+group by product_id,to_char(final_period,'yyyy')
+order by product_id,report_year) a
+where p.product_id = a.product_id
+order by a.product_id,a.report_year
+/
+create table sales
+(product_id   number,
+period_start        date,
+period_end           date,
+average_daily_sales number);
+/
+create table product(
+product_id    number,
+product_name  varchar2(100));
+/
+insert into sales values(1,to_date('2019-01-25','yyyy-mm-dd'),to_date('2019-02-28','yyyy-mm-dd'),100);
+insert into sales values(2,to_date('2018-12-01','yyyy-mm-dd'),to_date('2020-01-01','yyyy-mm-dd'),10);
+insert into sales values(3,to_date('2019-12-01','yyyy-mm-dd'),to_date('2020-01-31','yyyy-mm-dd'),1 );
+/
+select distinct trunc(add_months((period_start-level+1),12),'YEAR')-1,--trunc(add_months(period_start,12),'YEAR')-1,
+        --period_end,
+        product_id 
+from sales
+where to_char(period_start,'yyyy') <> to_char(period_end,'yyyy')
+connect by level <= period_end-period_start;
+/
+select  trunc(add_months(per_dt,12),'YEAR')-1 pd_end,trunc(add_months(per_dt,12),'YEAR') pd_start,period_start,period_end,product_id from (select period_start-level+1 per_dt,--trunc(add_months(period_start,12),'YEAR')-1,
+        period_start,
+        period_end,
+        product_id 
+from sales
+where to_char(period_start,'yyyy') <> to_char(period_end,'yyyy')
+connect by level <= period_end-period_start);
+/
+select to_date('01-12-18')+level-1 lln
+from dual
+connect by level <=  to_date('01-01-20')-to_date('01-12-18');--396;
+/
+select to_date('01-01-20')-to_date('01-12-18') from dual;--396 rows
+/

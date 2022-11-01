@@ -1,0 +1,61 @@
+select to_number('0') "transactions_count",count(*) "visits_count" from visits 
+where (user_id,visit_date) not in (select t.user_id,t.transaction_date 
+                                    from visits v,
+                                         transactions t
+                                    where t.user_id = v.user_id
+                                    and t.transaction_date = v.visit_date)
+union 
+select cnt "transactions_count", count(*) "visits_count" from (select count(*) cnt,t.user_id,t.transaction_date from
+visits v,
+transactions t
+where t.user_id = v.user_id
+and t.transaction_date = v.visit_date
+group by t.user_id,t.transaction_date)
+group by cnt
+union
+select transactions_count "transactions_count", to_number('0') "visits_count" from (select level-1 transactions_count
+from dual
+connect by level <= (select max(cnt) from (select count(*) cnt,t.user_id,t.transaction_date from
+visits v,
+transactions t
+where t.user_id = v.user_id
+and t.transaction_date = v.visit_date
+group by t.user_id,t.transaction_date)))
+where transactions_count <> 0 and transactions_count not in (select cnt from (select count(*) cnt,t.user_id,t.transaction_date from
+                                    visits v,
+                                    transactions t
+                                    where t.user_id = v.user_id
+                                    and t.transaction_date = v.visit_date
+                                    group by t.user_id,t.transaction_date)
+                                    group by cnt);
+/
+create table transactions
+(user_id         number,     
+transaction_date date,    
+amount           number);
+/
+create table visits(
+user_id       number,
+visit_date    date);
+/
+--insert into transactions values(
+
+insert into transactions values(1,to_date('2020-01-02','yyyy-mm-dd'),120);
+insert into transactions values(2,to_date('2020-01-03','yyyy-mm-dd'),22);
+insert into transactions values(7,to_date('2020-01-11','yyyy-mm-dd'),232);
+insert into transactions values(1,to_date('2020-01-04','yyyy-mm-dd'),7);
+insert into transactions values(9,to_date('2020-01-25','yyyy-mm-dd'),33);
+insert into transactions values(9,to_date('2020-01-25','yyyy-mm-dd'),66);
+insert into transactions values(8,to_date('2020-01-28','yyyy-mm-dd'),1);
+insert into transactions values(9,to_date('2020-01-25','yyyy-mm-dd'),99);--8
+/
+insert into visits values(1,to_date('2020-01-01','yyyy-mm-dd'));
+insert into visits values(2,to_date('2020-01-02','yyyy-mm-dd'));
+insert into visits values(12,to_date('2020-01-01','yyyy-mm-dd'));
+insert into visits values(19,to_date('2020-01-03','yyyy-mm-dd'));
+insert into visits values(1,to_date('2020-01-02','yyyy-mm-dd'));
+insert into visits values(2,to_date('2020-01-03','yyyy-mm-dd'));
+insert into visits values(1,to_date('2020-01-04','yyyy-mm-dd'));
+insert into visits values(7,to_date('2020-01-11','yyyy-mm-dd'));
+insert into visits values(9,to_date('2020-01-25','yyyy-mm-dd'));
+insert into visits values(8,to_date('2020-01-28','yyyy-mm-dd'));--10

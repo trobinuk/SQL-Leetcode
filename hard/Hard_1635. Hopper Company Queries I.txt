@@ -1,0 +1,93 @@
+select to_number(decode(substr(a.month,1,1),0,substr(a.month,2,1),a.month)) month,b.active_drivers,a.accepted_rides from 
+(select to_char(r.requested_at,'mm') month,count(*) accepted_rides --a.*,r.* 
+from acceptedrides a,
+     rides r
+where r.ride_id = a.ride_id
+and to_char(r.requested_at,'yyyy') = '2020'
+group by to_char(r.requested_at,'mm')
+union 
+select lvl,to_number('0') accepted_rides from (select decode(length(lvl),1,to_char(0||lvl),lvl) lvl from (select level lvl
+from dual
+connect by level <= 12))
+where lvl not in (select to_char(r.requested_at,'mm') month
+                    from acceptedrides a,
+                         rides r
+                    where r.ride_id = a.ride_id
+                    and to_char(r.requested_at,'yyyy') = '2020')) a,
+(select '01' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('31-01-20','dd-mm-yy') and r.requested_at >= to_date('01-01-20','dd-mm-yy')
+union
+select '02' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('29-02-20','dd-mm-yy') and r.requested_at >= to_date('01-02-20','dd-mm-yy')
+union
+select '03' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('31-03-20','dd-mm-yy') and r.requested_at >= to_date('01-03-20','dd-mm-yy')
+union
+select '04' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('30-04-20','dd-mm-yy') and r.requested_at >= to_date('01-04-20','dd-mm-yy')
+union
+select '05' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('31-05-20','dd-mm-yy') and r.requested_at >= to_date('01-05-20','dd-mm-yy')
+union
+select '06' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('30-06-20','dd-mm-yy') and r.requested_at >= to_date('01-06-20','dd-mm-yy')
+union
+select '07' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('31-07-20','dd-mm-yy') and r.requested_at >= to_date('01-07-20','dd-mm-yy')
+union
+select '08' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('31-08-20','dd-mm-yy') and r.requested_at >= to_date('01-08-20','dd-mm-yy')
+union
+select '09' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('30-09-20','dd-mm-yy') and r.requested_at >= to_date('01-09-20','dd-mm-yy')
+union
+select '10' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('31-10-20','dd-mm-yy') and r.requested_at >= to_date('01-10-20','dd-mm-yy')
+union
+select '11' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('30-11-20','dd-mm-yy') and r.requested_at >= to_date('01-11-20','dd-mm-yy')
+union
+select '12' month,count(distinct d.driver_id) active_drivers from rides r,drivers d where d.join_date <= to_date('31-12-20','dd-mm-yy') and r.requested_at >= to_date('01-12-20','dd-mm-yy')) b
+where a.month = b.month
+order by to_number(a.month)
+/
+create table drivers(
+ driver_id   number,
+ join_date    date);
+/
+insert into drivers values(10,to_date('2019-12-10','yyyy-mm-dd'));
+insert into drivers values(8,to_date('2020-1-13','yyyy-mm-dd'));
+insert into drivers values(5,to_date('2020-2-16','yyyy-mm-dd'));
+insert into drivers values(7,to_date('2020-3-8','yyyy-mm-dd'));
+insert into drivers values(4,to_date('2020-5-17','yyyy-mm-dd'));
+insert into drivers values(1,to_date('2020-10-24','yyyy-mm-dd'));
+insert into drivers values(6,to_date('2021-1-5','yyyy-mm-dd'));
+/
+create table rides(
+ ride_id      number,
+ user_id      number,
+ requested_at date);
+/
+insert into rides values(6,75,to_date('2019-12-9','yyyy-mm-dd'));
+insert into rides values(1,54,to_date('2020-2-9','yyyy-mm-dd'));
+insert into rides values(10,63,to_date('2020-3-4','yyyy-mm-dd'));
+insert into rides values(19,39,to_date('2020-4-6','yyyy-mm-dd'));
+insert into rides values(3,41,to_date('2020-6-3','yyyy-mm-dd'));
+insert into rides values(13,52,to_date('2020-6-22','yyyy-mm-dd'));
+insert into rides values(7,69,to_date('2020-7-16','yyyy-mm-dd'));
+insert into rides values(17,70,to_date('2020-8-25','yyyy-mm-dd'));
+insert into rides values(20,81,to_date('2020-11-2','yyyy-mm-dd'));
+insert into rides values(5,57,to_date('2020-11-9','yyyy-mm-dd'));
+insert into rides values(2,42,to_date('2020-12-9','yyyy-mm-dd'));
+insert into rides values(11,68,to_date('2021-1-11','yyyy-mm-dd'));
+insert into rides values(15,32,to_date('2021-1-17','yyyy-mm-dd'));
+insert into rides values(12,11,to_date('2021-1-19','yyyy-mm-dd'));
+insert into rides values(14,18,to_date('2021-1-27','yyyy-mm-dd'));
+/
+create table acceptedrides(
+ ride_id       number,
+ driver_id     number,
+ ride_distance number,
+ ride_duration number);
+/
+insert into acceptedrides values(10,10,63,38);
+insert into acceptedrides values(13,10,73,96);
+insert into acceptedrides values(7,8,100,28);
+insert into acceptedrides values(17,7,119,68);
+insert into acceptedrides values(20,1,121,92);
+insert into acceptedrides values(5,7,42,101);           
+insert into acceptedrides values(2,4,6,38);
+insert into acceptedrides values(11,8,37,43);
+insert into acceptedrides values(15,8,108,82);
+insert into acceptedrides values(12,8,38,34);
+insert into acceptedrides values(14,1,90,74);
+/

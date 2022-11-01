@@ -1,0 +1,31 @@
+select 'Senior' experience,count(*) accepted_candidates from (select employee_id,salary, sum(salary) over (order by salary rows between unbounded preceding and current row) sn 
+from candidates
+where experience = 'Senior')
+where sn <= 70000
+union all
+select 'Junior' experience,count(*) accepted_candidates from (select employee_id,salary, sum(salary) over (order by salary rows between unbounded preceding and current row) sn 
+from candidates
+where experience = 'Junior')
+where sn <= (select 70000-nvl(sum(salary),0) sal from (select employee_id,salary, sum(salary) over (order by salary rows between unbounded preceding and current row) sn 
+            from candidates
+            where experience = 'Senior')
+            where sn <= 70000)
+/
+create table candidates
+( employee_id number,
+ experience  varchar2(100),
+ salary      number)
+ /
+ | 1           | Junior     | 10000  |
+| 9           | Junior     | 10000  |
+| 2           | Senior     | 80000  |
+| 11          | Senior     | 80000  |
+| 13          | Senior     | 80000  |
+| 4           | Junior     | 40000  |
+ /
+insert into candidates values(1,'Junior',10000);
+insert into candidates values(9,'Junior',10000);
+insert into candidates values(2,'Senior',80000);
+insert into candidates values(11,'Senior',80000);
+insert into candidates values(13,'Senior',80000);
+insert into candidates values(4,'Junior',40000);

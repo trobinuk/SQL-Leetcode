@@ -1,0 +1,30 @@
+select distinct player_id,streak_num from (SELECT player_id,
+  count(*) streak_num,
+  rank() OVER(PARTITION BY player_id ORDER BY count(*) DESC) rnk
+  from 
+(SELECT player_id, result,
+    row_number() OVER(PARTITION BY player_id ORDER BY result, match_day) -
+      row_number() OVER(PARTITION BY player_id ORDER BY match_day) grp
+    FROM matches)
+  WHERE result = 'Win'
+  GROUP BY player_id, grp)
+  where rnk = 1
+union
+select distinct player_id,to_number('0') longest_streak
+from matches
+where player_id not in (select distinct player_id from matches where result = 'Win')
+/
+create table matches
+(player_id   number,
+match_day    date,
+result       varchar2(100));
+/
+insert into matches values(1,to_date('2022-01-17','yyyy-mm-dd'),'Win');
+insert into matches values(1,to_date('2022-01-18','yyyy-mm-dd'),'Win');
+insert into matches values(1,to_date('2022-01-25','yyyy-mm-dd'),'Win');
+insert into matches values(1,to_date('2022-01-31','yyyy-mm-dd'),'Draw');
+insert into matches values(1,to_date('2022-02-08','yyyy-mm-dd'),'Win');
+insert into matches values(2,to_date('2022-02-06','yyyy-mm-dd'),'Lose');
+insert into matches values(2,to_date('2022-02-08','yyyy-mm-dd'),'Lose');
+insert into matches values(3,to_date('2022-03-30','yyyy-mm-dd'),'Win');
+/

@@ -1,0 +1,71 @@
+create table failed
+(fail_date date);
+/
+create table succeeded
+(success_date date);
+/
+insert into failed values(to_date('2018-12-28','yyyy-mm-dd'));
+insert into failed values(to_date('2018-12-29','yyyy-mm-dd'));
+insert into failed values(to_date('2019-01-04','yyyy-mm-dd'));
+insert into failed values(to_date('2019-01-05','yyyy-mm-dd'));
+
+insert into succeeded values(to_date('2018-12-30','yyyy-mm-dd'));
+insert into succeeded values(to_date('2018-12-31','yyyy-mm-dd'));
+insert into succeeded values(to_date('2019-01-01','yyyy-mm-dd'));
+insert into succeeded values(to_date('2019-01-02','yyyy-mm-dd'));
+insert into succeeded values(to_date('2019-01-03','yyyy-mm-dd'));
+insert into succeeded values(to_date('2019-01-06','yyyy-mm-dd'));
+/
+select period,outcome,rank() over (partition by outcome order by period) rnk,period-lag(period) over (order by period) lg from (select success_date period,'success' outcome from succeeded
+union
+select fail_date period,'fail' outcome from failed)
+where to_char(period,'yyyy') = '2019'
+order by period--use this only for chk purpose since it cannot be used as 2 sep columns
+--join two tables and work on it
+/
+select * from failed where to_char(fail_date,'yyyy') = '2019' order by fail_date;
+/
+select * from succeeded where to_char(success_date,'yyyy') = '2019' order by success_date;
+/
+select success_date,
+        success_date-lag(success_date) over (order by success_date) lg,
+        lead(success_date) over (order by success_date)-success_date ld,
+        rank() over (order by success_date) rnk,
+        'success' period_state
+from succeeded 
+where to_char(success_date,'yyyy') = '2019' 
+order by success_date;
+/
+select fail_date,
+        fail_date-lag(fail_date) over (order by fail_date) lg,
+        lead(fail_date) over (order by fail_date)-fail_date ld,
+        rank() over (order by fail_date) rnk,
+        'fail' period_state
+from failed 
+where to_char(fail_date,'yyyy') = '2019' 
+order by fail_date;
+/
+select period,outcome,rank() over (partition by outcome order by period) rnk,period-lag(period) over (order by period) lg from (
+select success_date period,'success' outcome from succeeded
+union
+select fail_date period,'fail' outcome from failed)
+where to_char(period,'yyyy') = '2019'
+order by period
+/
+select * from 
+(select period,outcome,rank() over (partition by outcome order by period) rnk,period-lag(period) over (order by period) lg from (
+select success_date period,'success' outcome from succeeded
+union
+select fail_date period,'fail' outcome from failed)
+where to_char(period,'yyyy') = '2019'
+order by period) a,
+(select period,outcome,rank() over (partition by outcome order by period) rnk,period-lag(period) over (order by period) lg from (
+select success_date period,'success' outcome from succeeded
+union
+select fail_date period,'fail' outcome from failed)
+where to_char(period,'yyyy') = '2019'
+order by period) b
+order by a.period,b.period,a.outcome,b.outcome,a.rnk,b.rnk
+--where a.rnk = b.rnk
+/*(a.outcome  = 'success' and a.rnk = b.rnk) or
+(a.outcome  = 'fail' and a.rnk = b.rnk)*/

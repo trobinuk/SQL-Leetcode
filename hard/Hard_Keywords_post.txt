@@ -1,0 +1,59 @@
+create table keywords
+( topic_id   number,
+ word        varchar2(200));
+ /
+ create table posts
+(post_id   number,
+ content        varchar2(200));
+ /
+ 
+insert into keywords values(1,'handball');
+insert into keywords values(1,'football');
+insert into keywords values(3,'WAR');
+insert into keywords values(2,'Vaccine');
+/
+insert into posts values(1,'We call it soccer They call it football hahaha');
+insert into posts values(2,'Americans prefer basketball while Europeans love handball and football');
+insert into posts values(3,'stop the war and play handball');
+insert into posts values(4,'warning I planted some flowers this morning and then got vaccinated');
+/
+select level 
+from posts p
+where p.post_id = 1
+connect by level <= 12;
+/
+select * from keywords;
+/
+select * from posts
+where 
+/
+select * from keywords
+where lower(word) in (select listagg(content,' ') from posts)
+/
+select regexp_substr(content, '[^ ]+\W', 1, level) result
+    from posts
+    where post_id = 1
+    connect by level <= length(regexp_replace(content, '[^ ]+\W')) + 1;     
+    /
+    select regexp_substr(content, '[^ ]+\W', 1, 2) result
+    from posts
+    where post_id = 1;
+    /
+    select max(regexp_count(content,' ')) from posts;
+    /
+    select regexp_substr(content, '[^ ]+\W', 1, level) result
+    from posts
+    where post_id = 1
+    connect by level <= (select max(regexp_count(content,' ')) from posts); 
+/
+select regexp_substr(content, '[^ ]+\W', 1, lvl) result,post_id
+from posts p,
+    (select level lvl
+    from (select max(regexp_count(content,' '))+2 mx from posts)
+    connect by level <= mx) sq
+where lvl <= (select max(regexp_count(content,' '))+1 from posts);
+/
+select regexp_substr(content, '[^ ]+\W', 1, level) result,post_id
+    from posts
+    where post_id = 1
+    connect by level <= 12; 

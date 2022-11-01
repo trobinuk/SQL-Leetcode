@@ -1,0 +1,44 @@
+select distinct s.student_id,s.student_name from student s,exam e
+where s.student_id = e.student_id
+and s.student_id not in (select student_id from (select rank() over (partition by exam_id order by score desc) rnk,
+        student_id,
+        exam_id,
+        score
+from exam)
+where (rnk,exam_id)  in (select min(rnk) over (partition by exam_id) min_rnk,
+                                    ---max(rnk) over (partition by exam_id) max_rnk,
+                                    exam_id
+                            from (select rank() over (partition by exam_id order by score desc) rnk,
+                                    student_id,
+                                    exam_id,
+                                    score
+                            from exam))
+or (rnk,exam_id)  in (select --min(rnk) over (partition by exam_id) min_rnk,
+                                    max(rnk) over (partition by exam_id) max_rnk,
+                                    exam_id
+                            from (select rank() over (partition by exam_id order by score desc) rnk,
+                                    student_id,
+                                    exam_id,
+                                    score
+                            from exam)))
+order by s.student_id;
+/
+create table exam(
+exam_id      number,
+ student_id  number,
+ score         number);
+ /
+
+insert into exam values(10,1,70);
+insert into exam values(10,2,80);
+insert into exam values(10,3,90);
+insert into exam values(20,1,80);
+insert into exam values(30,1,70);
+insert into exam values(30,3,80);
+insert into exam values(30,4,90);
+insert into exam values(40,1,60);
+insert into exam values(40,2,70);
+insert into exam values(40,4,80);
+/
+select * from exam;
+/
